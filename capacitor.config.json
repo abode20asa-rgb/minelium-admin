@@ -1,0 +1,7 @@
+{
+  "appId": "com.minelium.ai",
+  "appName": "Minelium AI",
+  "webDir": "www",
+  "server": { "androidScheme": "https" },
+  "android": { "allowMixedContent": false }
+}

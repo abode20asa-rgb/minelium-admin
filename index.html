@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#131314">
+<title>Minelium AI</title>
+<style>
+:root{--bg:#131314;--sf:#1e1f20;--sf2:#282a2c;--ink:#e3e3e3;--mut:#9aa0a6;--pri:#9be3c3;--pri2:#6fcfa6;--line:#2f3133;--on:#0d1110}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:'Cairo','Segoe UI',Tahoma,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden;
+ padding-top:env(safe-area-inset-top,0);padding-bottom:env(safe-area-inset-bottom,0)}
+.hidden{display:none!important}
+button{font-family:inherit}
+.grad{background:linear-gradient(90deg,#9be3c3,#7ab7ff 55%,#c58af9);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent}
+
+/* شاشة التفعيل */
+#lock{flex:1;overflow:auto;padding:28px 20px 34px;max-width:480px;width:100%;margin:0 auto;text-align:center}
+#lock img{width:76px;height:76px;border-radius:22px;box-shadow:0 0 36px rgba(155,227,195,.25)}
+#lock h1{font-size:1.7rem;font-weight:800;margin:12px 0 6px}
+#lock p{color:var(--mut);font-size:.92rem;line-height:1.8;margin-bottom:16px}
+.plans{display:flex;flex-direction:column;gap:8px;text-align:right;margin-bottom:18px}
+.plan{background:var(--sf);border-radius:18px;padding:11px 16px}
+.plan b{display:block;color:var(--pri);font-size:.95rem}
+.plan span{font-size:.78rem;color:var(--mut);line-height:1.7}
+input{width:100%;border:1.5px solid transparent;background:var(--sf);color:var(--ink);border-radius:28px;padding:14px 18px;font-family:inherit;font-size:.95rem;outline:none;margin-bottom:10px;text-align:center}
+input:focus{border-color:var(--pri2)}
+#code{letter-spacing:3px;font-family:monospace;font-weight:900;text-transform:uppercase;direction:ltr}
+.btn{width:100%;background:var(--pri);color:var(--on);border:0;border-radius:28px;padding:14px;font-weight:800;font-size:1rem;cursor:pointer}
+.btn:disabled{opacity:.6}
+.err{color:#ff8a80;font-size:.82rem;font-weight:700;min-height:1.3em;margin-bottom:8px}
+
+/* المحادثة */
+#chat{flex:1;display:flex;flex-direction:column;min-height:0;position:relative}
+.top{display:flex;align-items:center;gap:6px;padding:8px 10px}
+.top .ttl{flex:1;font-weight:800;font-size:1.15rem}
+.ic{background:none;border:0;color:var(--ink);width:42px;height:42px;border-radius:50%;font-size:1.3rem;cursor:pointer}
+.ic:active{background:var(--sf2)}
+.pill{background:var(--sf);border-radius:20px;padding:5px 12px;font-size:.72rem;color:var(--pri);font-weight:700;max-width:46%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#msgs{flex:1;overflow:auto;padding:6px 16px 14px;display:flex;flex-direction:column;gap:18px;max-width:760px;width:100%;margin:0 auto}
+#hero{margin:auto 0;padding:10px 4px;text-align:right}
+#hero h2{font-size:2rem;font-weight:800;line-height:1.35}
+#hero h3{font-size:1.5rem;font-weight:700;color:#5f6368;line-height:1.4;margin-top:2px}
+#chips{display:flex;gap:10px;overflow-x:auto;padding:6px 16px 10px;max-width:760px;width:100%;margin:0 auto;scrollbar-width:none}
+#chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;background:var(--sf);border:0;color:var(--ink);border-radius:18px;padding:12px 16px;font-size:.85rem;line-height:1.6;cursor:pointer;text-align:right;min-width:128px}
+.chip i{display:block;font-style:normal;font-size:1.15rem;margin-bottom:4px}
+.chip:active{background:var(--sf2)}
+.m{line-height:1.9;font-size:.98rem;word-wrap:break-word;overflow-wrap:anywhere}
+.m.me{align-self:flex-end;background:var(--sf2);padding:10px 18px;border-radius:24px;border-top-left-radius:8px;max-width:86%;white-space:pre-wrap}
+.m.bot{display:flex;gap:10px;align-items:flex-start;padding-inline-end:6px}
+.m.bot .sp{flex:0 0 26px;height:26px;border-radius:50%;margin-top:4px;background:conic-gradient(from 200deg,#9be3c3,#7ab7ff,#c58af9,#9be3c3)}
+.m.bot .bd{flex:1;min-width:0}
+.m.ok{align-self:center;background:#12261d;border:1px solid var(--pri2);color:#bff0d8;font-weight:700;padding:10px 16px;border-radius:18px;font-size:.88rem}
+.m code{background:rgba(155,227,195,.14);padding:1px 6px;border-radius:6px;font-family:monospace;direction:ltr;unicode-bidi:embed}
+.m pre{background:#0b0c0d;color:#e6efe9;padding:12px;border-radius:14px;overflow:auto;direction:ltr;text-align:left;margin:8px 0;font-size:.8rem;white-space:pre}
+.dots span{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--pri);margin:0 2px;animation:b 1s infinite}
+.dots span:nth-child(2){animation-delay:.15s}.dots span:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.fade{animation:f .35s ease}
+@keyframes f{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+form{display:flex;align-items:flex-end;gap:8px;margin:4px 12px 12px;padding:8px 10px 8px 8px;background:var(--sf);border-radius:30px;max-width:736px;width:calc(100% - 24px);align-self:center}
+form textarea{flex:1;border:0;background:none;color:var(--ink);padding:10px 12px;font-family:inherit;font-size:1rem;resize:none;max-height:130px;outline:none;line-height:1.6}
+form textarea::placeholder{color:var(--mut)}
+#send{background:var(--pri);color:var(--on);border:0;border-radius:50%;width:42px;height:42px;font-size:1.15rem;font-weight:900;cursor:pointer;flex:0 0 42px}
+#send:disabled{opacity:.35}
+
+/* القائمة الجانبية */
+#scrim{position:absolute;inset:0;background:rgba(0,0,0,.55);z-index:20;opacity:0;pointer-events:none;transition:opacity .25s}
+#drawer{position:absolute;top:0;bottom:0;right:0;width:78%;max-width:320px;background:var(--sf);z-index:21;transform:translateX(100%);transition:transform .28s ease;padding:18px 14px;display:flex;flex-direction:column;gap:8px;border-radius:24px 0 0 24px}
+.open #scrim{opacity:1;pointer-events:auto}
+.open #drawer{transform:none}
+#drawer .dh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+#drawer .dh img{width:38px;height:38px;border-radius:11px}
+#drawer .dh b{font-size:1.1rem}
+.dbtn{background:var(--sf2);border:0;color:var(--ink);border-radius:20px;padding:13px 16px;font-size:.95rem;font-weight:700;text-align:right;cursor:pointer}
+#dplan{background:var(--bg);border-radius:18px;padding:12px 14px;font-size:.82rem;color:var(--pri);line-height:1.8;margin-top:4px}
+</style>
+</head>
+<body>
+
+<!-- شاشة التفعيل -->
+<div id="lock" class="hidden">
+  <img src="logo.png" alt="Minelium AI">
+  <h1 class="grad">Minelium AI</h1>
+  <p>مساعد ذكاء اصطناعي تسأله عن أي شي بحرية. فعّل باقتك بالكود اللي استلمته من الإدارة.</p>
+  <div class="plans">
+    <div class="plan"><b>⚡ Plus — حد يومي</b><span>عدد كردت (رسائل) خاص بيك يتجدد كل يوم.</span></div>
+    <div class="plan"><b>⏳ Pro — اشتراك بمدة</b><span>تسأل براحتك ويظل اشتراكك شغّال لعدد أيام محدد.</span></div>
+    <div class="plan"><b>♾️ Max — بلا حدود</b><span>أسئلة بدون حد يومي وبدون مدة تنتهي.</span></div>
+  </div>
+  <input id="name" placeholder="اسمك" maxlength="40" autocomplete="name">
+  <input id="phone" placeholder="رقم الهاتف (اختياري)" maxlength="15" inputmode="tel" style="direction:ltr">
+  <input id="code" placeholder="XXXXX-XXXXX" maxlength="14" autocapitalize="characters" autocomplete="off">
+  <div class="err" id="err"></div>
+  <button class="btn" id="go">🔑 تفعيل الاشتراك</button>
+</div>
+
+<!-- شاشة المحادثة -->
+<div id="chat" class="hidden">
+  <div class="top">
+    <button class="ic" id="menu" type="button" aria-label="القائمة">☰</button>
+    <div class="ttl grad">Minelium AI</div>
+    <div class="pill" id="plan"></div>
+    <button class="ic" id="newc" type="button" aria-label="محادثة جديدة">✎</button>
+  </div>
+  <div id="msgs"></div>
+  <div id="chips">
+    <button class="chip" type="button"><i>✍️</i>اكتب لي رسالة رسمية</button>
+    <button class="chip" type="button"><i>💡</i>اشرح لي موضوع بشكل مبسّط</button>
+    <button class="chip" type="button"><i>💻</i>ساعدني ببرمجة</button>
+    <button class="chip" type="button"><i>🌐</i>ترجم لي نص</button>
+  </div>
+  <form id="f">
+    <textarea id="in" rows="1" placeholder="اسأل Minelium AI"></textarea>
+    <button id="send" type="submit" aria-label="إرسال">↑</button>
+  </form>
+
+  <div id="scrim"></div>
+  <div id="drawer">
+    <div class="dh"><img src="logo.png" alt=""><b class="grad">Minelium AI</b></div>
+    <button class="dbtn" id="newc2" type="button">✎ محادثة جديدة</button>
+    <div id="dplan"></div>
+    <div style="flex:1"></div>
+    <button class="dbtn" id="out" type="button" style="color:#ff8a80">⎋ تسجيل الخروج</button>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+(function(){
+  var C=window.APP_CONFIG||{}, $=function(i){return document.getElementById(i);};
+  var K_TOKEN='minelium_token', K_HIST='minelium_hist';
+  var token=null, sub=null, hist=[], busy=false;
+
+  function lsGet(k){ try{return localStorage.getItem(k);}catch(e){return null;} }
+  function lsSet(k,v){ try{localStorage.setItem(k,v);}catch(e){} }
+  function lsDel(k){ try{localStorage.removeItem(k);}catch(e){} }
+  function esc(t){ return String(t==null?'':t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+  function md(t){
+    var h=esc(t);
+    h=h.replace(/```([\s\S]*?)```/g,function(_,c){ return '<pre>'+c.replace(/^\w*\n/,'')+'</pre>'; });
+    h=h.replace(/`([^`\n]+)`/g,'<code>$1</code>').replace(/\*\*([^*\n]+)\*\*/g,'<b>$1</b>');
+    return h.replace(/\n/g,'<br>').replace(/<pre>([\s\S]*?)<\/pre>/g,function(m){ return m.replace(/<br>/g,'\n'); });
+  }
+  function configured(){ return C.WORKER_URL&&C.SUPABASE_URL&&C.SUPABASE_ANON_KEY&&!/YOUR-/.test(C.WORKER_URL+C.SUPABASE_URL+C.SUPABASE_ANON_KEY); }
+
+  /* ── الباقات ── */
+  function daysLeft(exp){ var ms=new Date(exp)-Date.now(); if(!exp||isNaN(ms)||ms<=0) return 'لحظات'; var d=Math.ceil(ms/86400000); return d===1?'يوم واحد':(d===2?'يومين':d+' يوم'); }
+  function planName(x){ return x.plan==='max'?'Max (بلا حدود)':(x.plan==='pro'?'Pro':'Plus'); }
+  function planLine(x){
+    if(!x||!x.plan) return '';
+    if(x.plan==='max') return '♾️ نوع الباقة: بلا حدود (Max)';
+    if(x.plan==='pro') return '⏳ Pro • ينتهي اشتراكك بعد '+daysLeft(x.expires_at);
+    var v=Number(x.value)||0, rem=Math.max(0,v-(Number(x.used_today)||0));
+    return '⚡ Plus • باقي لك '+rem+' كردت من '+v+' اليوم (يتجدد كل يوم)';
+  }
+  function setSub(x){ sub=x; var l=planLine(x); $('plan').textContent=l.replace(/^\S+\s/,'').split('•')[0].trim(); $('dplan').textContent=l; var n=lsGet('minelium_name'); }
+
+  /* ── الشبكة ── */
+  function sbHeaders(){
+    var k=C.SUPABASE_ANON_KEY, h={apikey:k,'Content-Type':'application/json'};
+    if(String(k).indexOf('sb_')!==0) h.Authorization='Bearer '+k; /* المفاتيح الجديدة sb_ تنرسل بـ apikey فقط */
+    return h;
+  }
+  function rpc(fn,args){
+    return fetch(C.SUPABASE_URL+'/rest/v1/rpc/'+fn,{method:'POST',
+      headers:sbHeaders(),
+      body:JSON.stringify(args)}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); });
+  }
+
+  /* ── الشاشات ── */
+  function show(which){ $('lock').classList.toggle('hidden',which!=='lock'); $('chat').classList.toggle('hidden',which!=='chat'); }
+  function addMsg(cls,html,raw){
+    var d=document.createElement('div'); d.className='m fade '+cls;
+    if(cls==='bot'){ d.innerHTML='<div class="sp"></div><div class="bd"></div>'; var b=d.lastChild; if(raw) b.textContent=html; else b.innerHTML=html; d.setBody=function(h){ b.innerHTML=h; }; d.setText=function(t){ b.textContent=t; }; }
+    else if(raw) d.textContent=html; else d.innerHTML=html;
+    $('msgs').appendChild(d); $('msgs').scrollTop=$('msgs').scrollHeight; return d;
+  }
+  function hero(){ var n=lsGet('minelium_name')||''; var d=document.createElement('div'); d.id='hero'; d.innerHTML='<h2 class="grad">أهلاً '+esc(n)+'</h2><h3>شلون أكدر أساعدك اليوم؟</h3>'; $('msgs').appendChild(d); $('chips').classList.remove('hidden'); }
+  function welcome(){ hero(); }
+  function clearHero(){ var h=$('hero'); if(h) h.remove(); $('chips').classList.add('hidden'); }
+  function loadHist(){
+    $('msgs').innerHTML=''; hist=[];
+    try{ hist=JSON.parse(lsGet(K_HIST)||'[]')||[]; }catch(e){ hist=[]; }
+    if(!hist.length){ welcome(); return; }
+    clearHero(); hist.forEach(function(h){ if(h.r==='bot') addMsg('bot',md(h.t)); else addMsg('me',h.t,true); });
+  }
+  function saveHist(){ hist=hist.slice(-40); lsSet(K_HIST,JSON.stringify(hist)); }
+  function enterChat(){ show('chat'); loadHist(); setSub(sub); }
+  function lost(reason){
+    token=null; sub=null; lsDel(K_TOKEN); lsDel(K_HIST);
+    $('err').textContent=reason==='expired'?'⏳ انتهى اشتراكك. للتجديد اطلب كود جديد من الإدارة.':'🔒 انسحبت صلاحية اشتراكك. اطلب كود جديد من الإدارة.';
+    $('go').disabled=false; show('lock');
+  }
+
+  /* ── التفعيل ── */
+  $('go').onclick=function(){
+    var err=$('err'); err.textContent='';
+    if(!configured()){ err.textContent='⚠️ إعدادات التطبيق ناقصة (config.js)'; return; }
+    var name=$('name').value.trim(), code=$('code').value.trim().toUpperCase();
+    if(name.length<2){ err.textContent='اكتب اسمك'; return; }
+    if(code.length<8){ err.textContent='اكتب الكود كامل'; return; }
+    $('go').disabled=true;
+    rpc('ai_full_redeem',{p_code:code,p_name:name,p_phone:$('phone').value.trim()}).then(function(r){
+      if(r&&typeof r.token==='string'&&r.token.length>=20){
+        token=r.token; lsSet(K_TOKEN,token); lsSet('minelium_name',name); lsDel(K_HIST); sub=r; show('chat'); $('msgs').innerHTML=''; hist=[]; setSub(r);
+        addMsg('ok','✅ تم الاشتراك بباقة <b>'+planName(r)+'</b> — '+esc(planLine(r).replace(/^\S+\s/,''))+'<br>استمتع 🎉');
+        welcome();
+      }else{ err.textContent='❌ الكود غلط أو انتهت صلاحيته أو انستخدم قبل'; $('go').disabled=false; }
+    }).catch(function(){ err.textContent='⚠️ تعذّر الاتصال، تأكد من الإنترنت وجرّب مرة ثانية'; $('go').disabled=false; });
+  };
+
+  /* ── الإرسال ── */
+  function send(q){
+    if(busy||!q) return; busy=true; $('send').disabled=true; clearHero();
+    addMsg('me',q,true);
+    var d=addMsg('bot','<span class="dots"><span></span><span></span><span></span></span>');
+    var h=hist.slice(-10);
+    fetch(C.WORKER_URL,{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({q:q.slice(0,1500),history:h,full:true,token:token})})
+    .then(function(r){ return r.json().catch(function(){return {};}).then(function(j){
+      if(r.status===403&&(j.error==='kicked'||j.error==='expired')){ d.remove(); lost(j.error); return; }
+      if(r.status===429&&j.error==='limit'){
+        if(j.sub) setSub(j.sub);
+        d.setText('⚡ خلصت كردتك لليوم. تتجدد باجر وتكدر تكمل، أو اطلب من الإدارة ترقية باقتك.'); return;
+      }
+      if(!r.ok||!j.text) throw new Error(j.error||('HTTP '+r.status));
+      if(j.sub) setSub(j.sub);
+      hist.push({r:'user',t:q.slice(0,1500)}); hist.push({r:'bot',t:String(j.text).slice(0,3000)}); saveHist();
+      d.setBody(md(j.text));
+    }); })
+    .catch(function(e){ d.setText('⚠️ صار خطأ بالاتصال: '+String((e&&e.message)||'').slice(0,120)+' — جرّب مرة ثانية.'); })
+    .then(function(){ busy=false; $('send').disabled=false; $('msgs').scrollTop=$('msgs').scrollHeight; });
+  }
+  $('f').onsubmit=function(e){ e.preventDefault(); var v=$('in').value.trim(); if(!v) return; $('in').value=''; $('in').style.height='auto'; send(v); };
+  $('in').addEventListener('input',function(){ this.style.height='auto'; this.style.height=Math.min(this.scrollHeight,120)+'px'; });
+  $('in').addEventListener('keydown',function(e){ if(e.key==='Enter'&&!e.shiftKey){ e.preventDefault(); $('f').requestSubmit(); } });
+  $('newc').onclick=function(){ if(busy) return; lsDel(K_HIST); loadHist(); };
+  $('out').onclick=function(){ if(confirm('تسجيل الخروج من هذا الجهاز؟ تحتاج كود جديد للرجوع.')){ token=null; sub=null; lsDel(K_TOKEN); lsDel(K_HIST); lsDel('minelium_name'); $('go').disabled=false; $('err').textContent=''; show('lock'); } };
+
+  /* ── القائمة والاقتراحات ── */
+  var chat=$('chat');
+  function drawer(o){ chat.classList.toggle('open',o); }
+  $('menu').onclick=function(){ drawer(true); };
+  $('scrim').onclick=function(){ drawer(false); };
+  $('newc2').onclick=function(){ drawer(false); $('newc').onclick(); };
+  var pre=['اكتب لي رسالة رسمية بخصوص: ','اشرح لي بشكل مبسّط: ','ساعدني ببرمجة: ','ترجم لي هذا النص: '];
+  Array.prototype.forEach.call(document.querySelectorAll('.chip'),function(b,i){ b.onclick=function(){ $('in').value=pre[i]; $('in').focus(); }; });
+  $('out').addEventListener('click',function(){ drawer(false); });
+
+  /* ── البداية ── */
+  token=lsGet(K_TOKEN);
+  if(!token){ show('lock'); return; }
+  show('chat'); loadHist();
+  if(configured()) rpc('ai_full_check',{p_token:token}).then(function(r){
+    if(r&&r.ok===false){ lost(r.reason); return; }
+    if(r&&r.ok) setSub(r);
+  }).catch(function(){});
+})();
+</script>
+</body>
+</html>
