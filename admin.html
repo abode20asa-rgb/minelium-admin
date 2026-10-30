@@ -143,6 +143,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
         <div class="row"><div><label>جاهز</label><select id="vsp"><option value="">— اختر مزوّد —</option><option value="groq">Groq (Whisper)</option><option value="openai">OpenAI (Whisper)</option></select></div><div><label>اللغة (فارغ = تلقائي)</label><input id="vsl" style="direction:ltr" placeholder="ar"></div></div>
         <label>الرابط (URL)</label><input id="vsu" style="direction:ltr" placeholder="https://api.groq.com/openai/v1/audio/transcriptions">
         <div class="row"><div><label>المفتاح (Key)</label><input id="vsk" type="password" style="direction:ltr" autocomplete="off"></div><div><label>الموديل</label><input id="vsm" style="direction:ltr" placeholder="whisper-large-v3-turbo"></div></div>
+        <label>تلميح اللهجة (يحسّن الفهم)</label><input id="vsq" maxlength="220" placeholder="محادثة بالعراقية: شلونك، شكو ماكو، هواية، اكو، هسه، شنو، وين، ليش، خوش.">
         <div class="row" style="margin-top:6px"><button class="btn ghost sm" id="vst" type="button">🧪 اختبار (احجي 4 ثواني)</button></div><div class="tres" id="vsr"></div>
       </div>
       <div class="card">
@@ -392,7 +393,7 @@ function loadVoice(){
     $('ven').checked=v.enabled===true;
     var pl=Array.isArray(v.plans)&&v.plans.length?v.plans:PLANS.map(function(x){return x[0]});
     $('vplans').innerHTML=PLANS.map(function(x){return '<label style="display:flex;gap:6px;align-items:center;color:var(--ink);margin:0"><input type="checkbox" class="vpl" value="'+x[0]+'" style="width:auto"'+(pl.indexOf(x[0])>=0?' checked':'')+'> '+x[1]+'</label>'}).join('');
-    $('vsu').value=st.url||'';$('vsk').value=st.key||'';$('vsm').value=st.model||'';$('vsl').value=st.lang===undefined?'ar':st.lang;
+    $('vsu').value=st.url||'';$('vsk').value=st.key||'';$('vsm').value=st.model||'';$('vsl').value=st.lang===undefined?'ar':st.lang;$('vsq').value=st.prompt===undefined?'محادثة بالعراقية: شلونك، شكو ماكو، هواية، اكو، هسه، شنو، وين، ليش، خوش.':st.prompt;
     $('vtu').value=tt.url||'';$('vtk').value=tt.key||'';$('vtm').value=tt.model||'';$('vtv').value=tt.voice||'';$('vtf').value=tt.format||'mp3';
   }).catch(fail)
 }
@@ -402,7 +403,7 @@ $('vsave').onclick=function(){
   var pl=[].filter.call(document.querySelectorAll('.vpl'),function(x){return x.checked}).map(function(x){return x.value});
   if($('ven').checked&&!pl.length){toast('⚠️ اختر باقة وحدة على الأقل');return}
   var v={enabled:$('ven').checked,plans:pl,
-   stt:{url:$('vsu').value.trim(),key:$('vsk').value.trim(),model:$('vsm').value.trim(),lang:$('vsl').value.trim()},
+   stt:{url:$('vsu').value.trim(),key:$('vsk').value.trim(),model:$('vsm').value.trim(),lang:$('vsl').value.trim(),prompt:$('vsq').value.trim()},
    tts:{url:$('vtu').value.trim(),key:$('vtk').value.trim(),model:$('vtm').value.trim(),voice:$('vtv').value.trim(),format:$('vtf').value}};
   if(v.enabled&&!(v.stt.url&&v.stt.key)){toast('⚠️ حط رابط ومفتاح تحويل الصوت إلى نص (STT)');return}
   var d=Object.assign({},cfgData,{voice:v});
