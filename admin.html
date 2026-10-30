@@ -89,6 +89,8 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
     <button data-t="subs">👥 المشتركين</button>
     <button data-t="ai">⚙️ إعدادات الذكاء</button>
     <button data-t="models">🧩 النماذج</button>
+    <button data-t="voice">🎙️ الصوت</button>
+    <button data-t="notify">📢 الإشعارات</button>
     <button data-t="chat">💬 جرّب الذكاء</button>
     <button data-t="usage">📊 الاستعمال</button>
   </nav>
@@ -128,6 +130,46 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
       <div id="mdls"></div>
       <button class="btn ghost" id="madd" type="button" style="width:100%;margin-bottom:10px">➕ إضافة نموذج</button>
       <button class="btn" id="msave" type="button" style="width:100%">💾 حفظ النماذج</button>
+    </section>
+    <!-- المكالمة الصوتية -->
+    <section class="pane hidden" id="p-voice">
+      <div class="card">
+        <label style="display:flex;gap:8px;align-items:center;margin:0 0 10px;color:var(--ink);font-size:.95rem"><input type="checkbox" id="ven" style="width:auto"> المكالمة الصوتية شغّالة (يطلع زر 📞 بالتطبيق)</label>
+        <label>تشتغل على أي باقة؟</label>
+        <div id="vplans" style="display:flex;flex-wrap:wrap;gap:6px 14px"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 8px">🎧 تحويل كلام الزبون إلى نص (STT)</h3>
+        <div class="row"><div><label>جاهز</label><select id="vsp"><option value="">— اختر مزوّد —</option><option value="groq">Groq (Whisper)</option><option value="openai">OpenAI (Whisper)</option></select></div><div><label>اللغة (فارغ = تلقائي)</label><input id="vsl" style="direction:ltr" placeholder="ar"></div></div>
+        <label>الرابط (URL)</label><input id="vsu" style="direction:ltr" placeholder="https://api.groq.com/openai/v1/audio/transcriptions">
+        <div class="row"><div><label>المفتاح (Key)</label><input id="vsk" type="password" style="direction:ltr" autocomplete="off"></div><div><label>الموديل</label><input id="vsm" style="direction:ltr" placeholder="whisper-large-v3-turbo"></div></div>
+        <div class="row" style="margin-top:6px"><button class="btn ghost sm" id="vst" type="button">🧪 اختبار (احجي 4 ثواني)</button></div><div class="tres" id="vsr"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 8px">🔊 تحويل رد الذكاء إلى صوت (TTS)</h3>
+        <div class="row"><div><label>جاهز</label><select id="vtp"><option value="">— اختر مزوّد —</option><option value="openai">OpenAI</option><option value="groq">Groq</option></select></div><div><label>صيغة الصوت</label><select id="vtf"><option value="mp3">mp3</option><option value="wav">wav</option><option value="opus">opus</option></select></div></div>
+        <label>الرابط (URL)</label><input id="vtu" style="direction:ltr" placeholder="https://api.openai.com/v1/audio/speech">
+        <div class="row"><div><label>المفتاح (Key)</label><input id="vtk" type="password" style="direction:ltr" autocomplete="off"></div><div><label>الموديل</label><input id="vtm" style="direction:ltr" placeholder="tts-1"></div></div>
+        <label>الصوت (Voice)</label><input id="vtv" style="direction:ltr" placeholder="alloy">
+        <div class="row" style="margin-top:6px"><button class="btn ghost sm" id="vtt" type="button">🧪 اختبار (يشغّل جملة)</button></div><div class="tres" id="vtr"></div>
+      </div>
+      <button class="btn" id="vsave" type="button" style="width:100%">💾 حفظ إعدادات الصوت</button>
+      <p class="mut" style="margin-top:8px">لازم API لتحويل الصوت إلى نص (STT) حتى يشتغل زر المكالمة. أما API الصوت (TTS) فاختياري: إذا تركته فارغ، التطبيق يقرأ الرد بصوت التلفون نفسه (قد يكون ضعيف بالعربي). الصيغة OpenAI-compatible. الرد النصي نفسه يمر من APIs الذكاء العادية ويُحسب من كردت الباقة. احفظ قبل ما تضغط «اختبار».</p>
+    </section>
+    <!-- الإشعارات -->
+    <section class="pane hidden" id="p-notify">
+      <div class="card">
+        <label>العنوان (اختياري)</label><input id="ntT" maxlength="80" placeholder="مثال: ميزة جديدة 🎉">
+        <label>نص الإشعار</label><textarea id="ntB" rows="4" maxlength="600" placeholder="اكتب الرسالة اللي توصل لكل المستخدمين..." style="width:100%"></textarea>
+        <label>يوصل لمين؟</label>
+        <div id="ntP" style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:8px"></div>
+        <label>يبقى فعّال لمدة</label>
+        <select id="ntD"><option value="1">يوم</option><option value="3">3 أيام</option><option value="7" selected>أسبوع</option><option value="30">شهر</option></select>
+        <button class="btn" id="ntS" type="button" style="width:100%;margin-top:10px">📢 إرسال الإشعار</button>
+      </div>
+      <h3 style="margin:14px 0 8px">الإشعارات المرسلة</h3>
+      <div id="ntL"></div>
+      <p class="mut" style="margin-top:8px">الإشعار يظهر للمستخدم كنافذة مرة وحدة أول ما يفتح التطبيق (أو يرجع له) وهو متصل بالإنترنت. إذا التطبيق مسكّر تماماً ما يوصله إلا بعد ما يفتحه. حذف الإشعار يشيله من عند الكل.</p>
     </section>
     <section class="pane hidden" id="p-chat">
       <div id="cmsgs"></div>
@@ -205,8 +247,8 @@ S.rt=ls('mn_rt');if(S.rt)refresh().then(enter).catch(function(){ls('mn_rt',null)
 /* ── التبويبات ── */
 function tab(t){
   Array.prototype.forEach.call($('tabs').children,function(b){b.classList.toggle('on',b.dataset.t===t)});
-  ['codes','subs','ai','models','chat','usage'].forEach(function(x){$('p-'+x).classList.toggle('hidden',x!==t)});
-  if(t==='codes')loadCodes();if(t==='subs')loadSubs();if(t==='ai')loadAI();if(t==='models')loadModels();if(t==='usage')loadUsage();if(t==='chat'&&!chat.length)newChat();
+  ['codes','subs','ai','models','voice','notify','chat','usage'].forEach(function(x){$('p-'+x).classList.toggle('hidden',x!==t)});
+  if(t==='codes')loadCodes();if(t==='subs')loadSubs();if(t==='ai')loadAI();if(t==='models')loadModels();if(t==='voice')loadVoice();if(t==='notify')loadNotify();if(t==='usage')loadUsage();if(t==='chat'&&!chat.length)newChat();
 }
 $('tabs').onclick=function(e){var b=e.target.closest('button');if(b)tab(b.dataset.t)};
 function fail(e){toast('⚠️ '+(e&&e.message||e))}
@@ -340,6 +382,92 @@ function callWorker(body){
    .then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok||!j.text)throw new Error(j.error||('HTTP '+r.status));return j})})
 }
 
+
+/* ── المكالمة الصوتية: STT + TTS ── */
+var VPRE={stt:{groq:{url:'https://api.groq.com/openai/v1/audio/transcriptions',model:'whisper-large-v3-turbo'},openai:{url:'https://api.openai.com/v1/audio/transcriptions',model:'whisper-1'}},
+ tts:{openai:{url:'https://api.openai.com/v1/audio/speech',model:'tts-1',voice:'alloy',format:'mp3'},groq:{url:'https://api.groq.com/openai/v1/audio/speech',model:'',voice:'',format:'wav'}}};
+function loadVoice(){
+  req('/rest/v1/ai_config?id=eq.1&select=data').then(function(rows){
+    cfgData=(rows&&rows[0]&&rows[0].data)||{};var v=cfgData.voice||{},st=v.stt||{},tt=v.tts||{};
+    $('ven').checked=v.enabled===true;
+    var pl=Array.isArray(v.plans)&&v.plans.length?v.plans:PLANS.map(function(x){return x[0]});
+    $('vplans').innerHTML=PLANS.map(function(x){return '<label style="display:flex;gap:6px;align-items:center;color:var(--ink);margin:0"><input type="checkbox" class="vpl" value="'+x[0]+'" style="width:auto"'+(pl.indexOf(x[0])>=0?' checked':'')+'> '+x[1]+'</label>'}).join('');
+    $('vsu').value=st.url||'';$('vsk').value=st.key||'';$('vsm').value=st.model||'';$('vsl').value=st.lang===undefined?'ar':st.lang;
+    $('vtu').value=tt.url||'';$('vtk').value=tt.key||'';$('vtm').value=tt.model||'';$('vtv').value=tt.voice||'';$('vtf').value=tt.format||'mp3';
+  }).catch(fail)
+}
+$('vsp').onchange=function(){var p=VPRE.stt[this.value];if(p){$('vsu').value=p.url;$('vsm').value=p.model}};
+$('vtp').onchange=function(){var p=VPRE.tts[this.value];if(p){$('vtu').value=p.url;$('vtm').value=p.model;$('vtv').value=p.voice;$('vtf').value=p.format}};
+$('vsave').onclick=function(){
+  var pl=[].filter.call(document.querySelectorAll('.vpl'),function(x){return x.checked}).map(function(x){return x.value});
+  if($('ven').checked&&!pl.length){toast('⚠️ اختر باقة وحدة على الأقل');return}
+  var v={enabled:$('ven').checked,plans:pl,
+   stt:{url:$('vsu').value.trim(),key:$('vsk').value.trim(),model:$('vsm').value.trim(),lang:$('vsl').value.trim()},
+   tts:{url:$('vtu').value.trim(),key:$('vtk').value.trim(),model:$('vtm').value.trim(),voice:$('vtv').value.trim(),format:$('vtf').value}};
+  if(v.enabled&&!(v.stt.url&&v.stt.key)){toast('⚠️ حط رابط ومفتاح تحويل الصوت إلى نص (STT)');return}
+  var d=Object.assign({},cfgData,{voice:v});
+  req('/rest/v1/ai_config',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:1,data:d,updated_at:new Date().toISOString()})})
+   .then(function(){cfgData=d;toast('تم حفظ إعدادات الصوت ✅')}).catch(fail)
+};
+function callVoice(body){
+  body.test=true;
+  return fetch(worker(),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+S.jwt},body:JSON.stringify(body)})
+   .then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j})})
+}
+$('vtt').onclick=function(){
+  var out=$('vtr'),b=this;if(!worker()){out.innerHTML='<span class="no">ما محطوط رابط الـ Worker</span>';return}
+  out.textContent='جاري الاختبار...';b.disabled=true;var t0=Date.now();
+  callVoice({voice:'tts',text:'مرحباً، أنا ميناليوم. هذا اختبار الصوت.'}).then(function(j){
+    out.innerHTML='<span class="ok">✅ شغّال</span> — '+(Date.now()-t0)+' ms';
+    var a=new Audio(j.audio);a.play().catch(function(){out.innerHTML+='<br>اضغط تشغيل من المتصفح'})
+  }).catch(function(e){out.innerHTML='<span class="no">❌ '+esc(e.message)+'</span>'}).then(function(){b.disabled=false})
+};
+$('vst').onclick=function(){
+  var out=$('vsr'),b=this;if(!worker()){out.innerHTML='<span class="no">ما محطوط رابط الـ Worker</span>';return}
+  if(!navigator.mediaDevices||!window.MediaRecorder){out.innerHTML='<span class="no">المتصفح ما يدعم التسجيل</span>';return}
+  b.disabled=true;out.textContent='🎙️ احجي هسه... (4 ثواني)';
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(st){
+    var ch=[],rec=new MediaRecorder(st,{audioBitsPerSecond:24000});
+    rec.ondataavailable=function(e){if(e.data&&e.data.size)ch.push(e.data)};
+    rec.onstop=function(){
+      st.getTracks().forEach(function(t){t.stop()});out.textContent='جاري التحويل...';
+      var fr=new FileReader();fr.onload=function(){var t0=Date.now();
+        callVoice({voice:'stt',audio:fr.result}).then(function(j){out.innerHTML='<span class="ok">✅ شغّال</span> — '+(Date.now()-t0)+' ms<br>'+(esc(j.text)||'(ما سمعت كلام)')})
+         .catch(function(e){out.innerHTML='<span class="no">❌ '+esc(e.message)+'</span>'}).then(function(){b.disabled=false})};
+      fr.readAsDataURL(new Blob(ch,{type:rec.mimeType||'audio/webm'}))
+    };
+    rec.start();setTimeout(function(){try{rec.stop()}catch(e){}},4000)
+  }).catch(function(){out.innerHTML='<span class="no">❌ اسمح للمتصفح باستعمال المايك</span>';b.disabled=false})
+};
+
+/* ── الإشعارات ── */
+function loadNotify(){
+  $('ntP').innerHTML='<label style="display:flex;gap:6px;align-items:center;color:var(--ink);margin:0"><input type="checkbox" id="ntAll" style="width:auto" checked> الكل</label>'
+   +PLANS.map(function(x){return '<label style="display:flex;gap:6px;align-items:center;color:var(--ink);margin:0"><input type="checkbox" class="ntp" value="'+x[0]+'" style="width:auto" checked> '+x[1]+'</label>'}).join('');
+  rpc('ai_notice_list').then(function(l){
+    $('ntL').innerHTML=(l||[]).length?l.map(function(n){
+      var to=n.plans&&n.plans.length?n.plans.map(function(p){return planLbl(p,0).split('•')[0].trim()}).join(' ، '):'الكل';
+      return '<div class="card"><div style="display:flex;gap:8px;align-items:flex-start"><div style="flex:1">'+(n.title?'<b>'+esc(n.title)+'</b><br>':'')+esc(n.body)
+       +'<div class="mut" style="margin-top:6px">إلى: '+esc(to)+' • '+fmt(n.created_at)+' • '+(n.active?'فعّال لـ '+fmt(n.expires_at):'منتهي')+'</div></div><button class="btn bad sm ntdel" data-i="'+n.id+'" type="button">🗑</button></div></div>'
+    }).join(''):'<p class="mut">ما كو إشعارات.</p>'
+  }).catch(fail)
+}
+$('ntP').onchange=function(e){var t=e.target;
+  if(t.id==='ntAll'){[].forEach.call(document.querySelectorAll('.ntp'),function(x){x.checked=t.checked});return}
+  $('ntAll').checked=[].every.call(document.querySelectorAll('.ntp'),function(x){return x.checked})};
+$('ntS').onclick=function(){
+  var b=$('ntB').value.trim();if(!b){toast('⚠️ اكتب نص الإشعار');return}
+  var pl=[].filter.call(document.querySelectorAll('.ntp'),function(x){return x.checked}).map(function(x){return x.value});
+  if(!pl.length){toast('⚠️ اختر باقة وحدة على الأقل');return}
+  var all=pl.length===PLANS.length;
+  if(!confirm('إرسال الإشعار إلى '+(all?'كل المستخدمين':'المستخدمين بالباقات المحددة')+'؟'))return;
+  var btn=this;btn.disabled=true;
+  rpc('ai_notice_send',{p_title:$('ntT').value.trim(),p_body:b,p_plans:all?null:pl,p_days:parseInt($('ntD').value,10)||7}).then(function(){
+    $('ntT').value='';$('ntB').value='';toast('تم إرسال الإشعار ✅');loadNotify()
+  }).catch(fail).then(function(){btn.disabled=false})
+};
+$('ntL').onclick=function(e){var b=e.target.closest('.ntdel');if(!b||!confirm('حذف الإشعار؟ يختفي من عند الكل.'))return;
+  rpc('ai_notice_del',{p_id:+b.dataset.i}).then(loadNotify).catch(fail)};
 
 /* ── النماذج: اسم + صورة + الـ APIs اللي تشتغل عليها ── */
 var mdls=[];
