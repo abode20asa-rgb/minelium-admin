@@ -89,6 +89,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
     <button data-t="subs">👥 المشتركين</button>
     <button data-t="ai">⚙️ إعدادات الذكاء</button>
     <button data-t="models">🧩 النماذج</button>
+  <button data-t="images">🎨 الصور</button>
     <button data-t="voice">🎙️ الصوت</button>
     <button data-t="notify">📢 الإشعارات</button>
     <button data-t="chat">💬 جرّب الذكاء</button>
@@ -132,6 +133,19 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
       <button class="btn" id="msave" type="button" style="width:100%">💾 حفظ النماذج</button>
     </section>
     <!-- المكالمة الصوتية -->
+        <section class="pane hidden" id="p-images">
+      <p class="mut" style="margin-bottom:10px">من هنا تفعّل توليد الصور بضغطة وحدة: يسوّي لك API ونموذج جاهز بالتطبيق. كل رسالة تكتبها بنموذج الصور تتحول لصورة، والنموذج العادي ما يصنع صور أبداً.</p>
+      <div class="card">
+        <label>المزوّد</label>
+        <select id="igp"><option value="cf">🆓 مجاني — Cloudflare FLUX (يحتاج ربط Workers AI باسم AI بالـ Worker)</option><option value="gemini">💳 Gemini (مدفوع — يعدّل الصور المرفوعة)</option></select>
+        <div id="igkw" style="display:none"><label>مفتاح Gemini</label><input id="igk" type="password" style="direction:ltr" autocomplete="off"><label>الموديل</label><input id="igm" style="direction:ltr" value="gemini-3.1-flash-image"></div>
+        <label>اسم النموذج بالتطبيق</label><input id="ign" maxlength="30" value="صور">
+        <label>تشتغل على أي باقة؟</label><div id="igpl" style="display:flex;flex-wrap:wrap;gap:6px 14px"></div>
+        <label>حد يومي (0 = بلا حد) — الحصة المجانية تكفي تقريباً 150 صورة باليوم</label><input id="igl" type="number" min="0" value="150">
+        <div class="row" style="margin-top:12px"><button class="btn" id="igsave" type="button">💾 حفظ وتفعيل</button><button class="btn bad sm" id="igoff" type="button" style="flex:0 0 auto">إيقاف الصور</button></div>
+        <p class="mut" id="igst" style="margin-top:10px"></p>
+      </div>
+    </section>
     <section class="pane hidden" id="p-voice">
       <div class="card">
         <label style="display:flex;gap:8px;align-items:center;margin:0 0 10px;color:var(--ink);font-size:.95rem"><input type="checkbox" id="ven" style="width:auto"> المكالمة الصوتية شغّالة (يطلع زر 📞 بالتطبيق)</label>
@@ -249,8 +263,8 @@ S.rt=ls('mn_rt');if(S.rt)refresh().then(enter).catch(function(){ls('mn_rt',null)
 /* ── التبويبات ── */
 function tab(t){
   Array.prototype.forEach.call($('tabs').children,function(b){b.classList.toggle('on',b.dataset.t===t)});
-  ['codes','subs','ai','models','voice','notify','chat','usage'].forEach(function(x){$('p-'+x).classList.toggle('hidden',x!==t)});
-  if(t==='codes')loadCodes();if(t==='subs')loadSubs();if(t==='ai')loadAI();if(t==='models')loadModels();if(t==='voice')loadVoice();if(t==='notify')loadNotify();if(t==='usage')loadUsage();if(t==='chat'&&!chat.length)newChat();
+  ['codes','subs','ai','models','images','voice','notify','chat','usage'].forEach(function(x){$('p-'+x).classList.toggle('hidden',x!==t)});
+  if(t==='codes')loadCodes();if(t==='subs')loadSubs();if(t==='ai')loadAI();if(t==='models')loadModels();if(t==='images')loadImages();if(t==='voice')loadVoice();if(t==='notify')loadNotify();if(t==='usage')loadUsage();if(t==='chat'&&!chat.length)newChat();
 }
 $('tabs').onclick=function(e){var b=e.target.closest('button');if(b)tab(b.dataset.t)};
 function fail(e){toast('⚠️ '+(e&&e.message||e))}
@@ -492,6 +506,52 @@ function sendPush(title,body,plans){
 $('ntL').onclick=function(e){var b=e.target.closest('.ntdel');if(!b||!confirm('حذف الإشعار؟ يختفي من عند الكل.'))return;
   rpc('ai_notice_del',{p_id:+b.dataset.i}).then(loadNotify).catch(fail)};
 
+
+/* ── 🎨 الصور: تفعيل توليد الصور بضغطة (يسوّي API + نموذج) ── */
+function isImgSlot(a){a=a||{};return /^@cf\//i.test(a.model||'')||(/generativelanguage\.googleapis\.com/i.test(a.url||'')&&/image/i.test(a.model||''))}
+function igPlans(sel){$('igpl').innerHTML=PLANS.map(function(x){return '<label style="display:flex;gap:6px;align-items:center;color:var(--ink);margin:0"><input type="checkbox" class="igpc" value="'+x[0]+'" style="width:auto"'+(sel.indexOf(x[0])>=0?' checked':'')+'> '+x[1]+'</label>'}).join('')}
+$('igp').onchange=function(){$('igkw').style.display=$('igp').value==='gemini'?'block':'none'};
+function loadImages(){req('/rest/v1/ai_config?id=eq.1&select=data').then(function(rows){
+  cfgData=(rows&&rows[0]&&rows[0].data)||{};var apis=Array.isArray(cfgData.apis)?cfgData.apis:[],k=-1;
+  for(var i=0;i<apis.length;i++){if(isImgSlot(apis[i])){k=i;break}}
+  var all=PLANS.map(function(x){return x[0]});
+  if(k<0){igPlans(['pro','max']);$('igst').textContent='⚪ توليد الصور غير مفعّل.';return}
+  var a=apis[k],ms=Array.isArray(cfgData.models)?cfgData.models:[],nm='';
+  ms.forEach(function(m){if(m&&!m.main&&(m.apis||[]).indexOf(k)>=0)nm=m.name});
+  $('igp').value=/^@cf\//i.test(a.model||'')?'cf':'gemini';$('igp').onchange();
+  if($('igp').value==='gemini'){$('igk').value=a.key||'';$('igm').value=a.model||'gemini-3.1-flash-image'}
+  $('ign').value=nm||'صور';$('igl').value=Number(a.limit)||0;igPlans(Array.isArray(a.plans)?a.plans:all);
+  $('igst').textContent='✅ مفعّل (API '+(k+1)+')'+(nm?' — نموذج «'+nm+'» بالتطبيق':' — لكن غير مربوط بنموذج، اضغط حفظ وتفعيل');
+}).catch(fail)}
+$('igsave').onclick=function(){
+  var prov=$('igp').value,pl=[].filter.call(document.querySelectorAll('.igpc'),function(x){return x.checked}).map(function(x){return x.value});
+  if(!pl.length){toast('⚠️ اختر باقة وحدة على الأقل');return}
+  if(prov==='gemini'&&!$('igk').value.trim()){toast('⚠️ اكتب مفتاح Gemini');return}
+  var nm=($('ign').value||'').trim()||'صور';
+  req('/rest/v1/ai_config?id=eq.1&select=data').then(function(rows){
+    var d=Object.assign({},(rows&&rows[0]&&rows[0].data)||{}),apis=Array.isArray(d.apis)?d.apis.slice():[],k=-1,i;
+    for(i=0;i<apis.length;i++){if(isImgSlot(apis[i])){k=i;break}}
+    var slot=prov==='cf'?{url:'cloudflare',key:'free',model:'@cf/black-forest-labs/flux-1-schnell',format:'openai'}:{url:'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',key:$('igk').value.trim(),model:($('igm').value||'').trim()||'gemini-3.1-flash-image',format:'openai'};
+    slot.plans=pl;slot.limit=parseInt($('igl').value,10)||0;slot.resetUtc=0;slot.eco=false;slot.search=false;
+    if(k<0){for(i=0;i<apis.length;i++){if(!apis[i]||(!apis[i].url&&!apis[i].key)){k=i;break}}if(k<0){k=apis.length;apis.push(slot)}else apis[k]=slot}else apis[k]=slot;
+    d.apis=apis;
+    var ms=Array.isArray(d.models)?d.models.slice():[],mi=-1;
+    for(i=0;i<ms.length;i++){if(ms[i]&&!ms[i].main&&(ms[i].apis||[]).indexOf(k)>=0){mi=i;break}}
+    if(!ms.some(function(m){return m&&m.main}))ms.unshift({id:'main'+Date.now().toString(36),name:'Minelium AI',desc:'',icon:'',main:true,off:[],apis:[]});
+    if(mi>=0)ms[mi]=Object.assign({},ms[mi],{name:nm,apis:[k]});else ms.push({id:'img'+Date.now().toString(36),name:nm,desc:'توليد صور من الوصف',icon:'',main:false,off:['voice','imgin'],apis:[k]});
+    d.models=ms;
+    return req('/rest/v1/ai_config',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:1,data:d,updated_at:new Date().toISOString()})}).then(function(){cfgData=d;toast('تم تفعيل الصور ✅');loadImages()});
+  }).catch(fail)};
+$('igoff').onclick=function(){
+  if(!confirm('إيقاف توليد الصور؟ يُحذف نموذج الصور وخانته.'))return;
+  req('/rest/v1/ai_config?id=eq.1&select=data').then(function(rows){
+    var d=Object.assign({},(rows&&rows[0]&&rows[0].data)||{}),apis=Array.isArray(d.apis)?d.apis.slice():[],k=-1;
+    for(var i=0;i<apis.length;i++){if(isImgSlot(apis[i])){k=i;break}}
+    if(k<0){toast('مو مفعّل أصلاً');return}
+    apis[k]={};d.apis=apis;
+    d.models=(Array.isArray(d.models)?d.models:[]).filter(function(m){return !(m&&!m.main&&(m.apis||[]).indexOf(k)>=0)});
+    return req('/rest/v1/ai_config',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:1,data:d,updated_at:new Date().toISOString()})}).then(function(){cfgData=d;toast('تم إيقاف الصور');loadImages()});
+  }).catch(fail)};
 /* ── النماذج: اسم + صورة + الـ APIs اللي تشتغل عليها ── */
 var mdls=[];
 var OFFS=[['voice','🎙️ المكالمة الصوتية'],['imgin','📷 رفع وتحليل الصور'],['search','🔎 بحث الإنترنت'],['imggen','🎨 توليد الصور']];
