@@ -139,7 +139,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
 <dialog id="dlg">
   <b id="dt">تعديل الباقة</b>
   <label>الباقة</label>
-  <select id="eplan"><option value="plus">Plus</option><option value="pro">Pro</option><option value="max">Max</option></select>
+  <select id="eplan"><option value="free">عادي</option><option value="plus">Plus</option><option value="pro">Pro</option><option value="max">Max</option></select>
   <div id="evwrap"><label id="evl">كردت باليوم</label><input id="eval" type="number" min="1"></div>
   <div class="row" style="margin-top:14px"><button class="btn" id="eok">حفظ</button><button class="btn ghost" id="ecan">إلغاء</button></div>
 </dialog>
@@ -237,7 +237,7 @@ function renderSubs(){
   $('slist').innerHTML=s.length?s.map(function(x){
     return '<div class="card item"><div class="info"><b>'+esc(x.name||'بدون اسم')+'</b> <span class="badge '+esc(x.plan)+'">'+esc(x.plan==='free'?'عادي':x.plan)+'</span>'+(x.expired?' <span class="no">منتهي</span>':'')
      +'<div class="mut">'+(x.email?'📧 <span style="direction:ltr;unicode-bidi:embed;user-select:all">'+esc(x.email)+'</span><br>':'')+(x.phone?'📞 '+esc(x.phone)+'<br>':'')+planLbl(x.plan,x.value)
-     +'<br>رسائل: '+x.msgs+(x.plan==='plus'?' • اليوم: '+x.used_today+'/'+x.value:'')+(x.expires_at?' • ينتهي: '+fmt(x.expires_at):'')+'<br>تفعّل: '+fmt(x.created_at)+' • آخر نشاط: '+fmt(x.last_seen)+'</div></div>'
+     +'<br>رسائل: '+x.msgs+(x.plan==='plus'||x.plan==='free'?' • اليوم: '+x.used_today+'/'+x.value:'')+(x.expires_at?' • ينتهي: '+fmt(x.expires_at):'')+'<br>تفعّل: '+fmt(x.created_at)+' • آخر نشاط: '+fmt(x.last_seen)+'</div></div>'
      +'<div class="acts"><button class="btn ghost sm" data-ch="'+x.id+'" data-nm="'+esc(x.name||x.email||'')+'">💬</button><button class="btn ghost sm" data-ed="'+x.id+'" data-p="'+esc(x.plan)+'" data-v="'+x.value+'">تعديل</button><button class="btn bad sm" data-k="'+x.id+'">طرد</button></div></div>'
   }).join(''):'<p class="mut">'+(subsData.length?'ماكو نتيجة للبحث.':'ماكو مشتركين بعد.')+'</p>'
 }
