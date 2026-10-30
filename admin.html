@@ -164,6 +164,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
         <label>نص الإشعار</label><textarea id="ntB" rows="4" maxlength="600" placeholder="اكتب الرسالة اللي توصل لكل المستخدمين..." style="width:100%"></textarea>
         <label>يوصل لمين؟</label>
         <div id="ntP" style="display:flex;flex-wrap:wrap;gap:6px 14px;margin-bottom:8px"></div>
+        <label style="display:flex;gap:8px;align-items:center;color:var(--ink);margin:8px 0"><input type="checkbox" id="ntPush" style="width:auto" checked> يطلع كإشعار فوق الشاشة (Push) <span id="ntCnt" class="mut"></span></label>
         <label>يبقى فعّال لمدة</label>
         <select id="ntD"><option value="1">يوم</option><option value="3">3 أيام</option><option value="7" selected>أسبوع</option><option value="30">شهر</option></select>
         <button class="btn" id="ntS" type="button" style="width:100%;margin-top:10px">📢 إرسال الإشعار</button>
@@ -443,6 +444,7 @@ $('vst').onclick=function(){
 
 /* ── الإشعارات ── */
 function loadNotify(){
+  rpc('ai_push_count').then(function(n){$('ntCnt').textContent='— أجهزة مسجّلة: '+n}).catch(function(){$('ntCnt').textContent=''});
   $('ntP').innerHTML='<label style="display:flex;gap:6px;align-items:center;color:var(--ink);margin:0"><input type="checkbox" id="ntAll" style="width:auto" checked> الكل</label>'
    +PLANS.map(function(x){return '<label style="display:flex;gap:6px;align-items:center;color:var(--ink);margin:0"><input type="checkbox" class="ntp" value="'+x[0]+'" style="width:auto" checked> '+x[1]+'</label>'}).join('');
   rpc('ai_notice_list').then(function(l){
@@ -463,10 +465,30 @@ $('ntS').onclick=function(){
   var all=pl.length===PLANS.length;
   if(!confirm('إرسال الإشعار إلى '+(all?'كل المستخدمين':'المستخدمين بالباقات المحددة')+'؟'))return;
   var btn=this;btn.disabled=true;
-  rpc('ai_notice_send',{p_title:$('ntT').value.trim(),p_body:b,p_plans:all?null:pl,p_days:parseInt($('ntD').value,10)||7}).then(function(){
-    $('ntT').value='';$('ntB').value='';toast('تم إرسال الإشعار ✅');loadNotify()
-  }).catch(fail).then(function(){btn.disabled=false})
+  var title=$('ntT').value.trim(),wantPush=$('ntPush').checked;
+  rpc('ai_notice_send',{p_title:title,p_body:b,p_plans:all?null:pl,p_days:parseInt($('ntD').value,10)||7}).then(function(){
+    $('ntT').value='';$('ntB').value='';
+    if(!wantPush){toast('تم إرسال الإشعار ✅');return}
+    return sendPush(title,b,all?null:pl)
+  }).then(function(){loadNotify()}).catch(fail).then(function(){btn.disabled=false})
 };
+function sendPush(title,body,plans){
+  if(!worker()){toast('تم الإرسال داخل التطبيق (ما محطوط رابط الـ Worker للـ Push)');return}
+  return rpc('ai_push_tokens',{p_plans:plans}).then(function(tk){
+    tk=tk||[];if(!tk.length){toast('تم الإرسال ✅ — ما كو أجهزة مسجّلة للـ Push بعد');return}
+    var sent=0,dead=[],err='',i=0;
+    function next(){
+      if(i>=tk.length)return Promise.resolve();
+      var chunk=tk.slice(i,i+40);i+=40;
+      return fetch(worker(),{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+S.jwt},body:JSON.stringify({push:true,tokens:chunk,title:title||'Minelium AI',body:body})})
+       .then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok)throw new Error(j.error||('HTTP '+r.status));sent+=j.sent||0;dead=dead.concat(j.dead||[]);if(j.error)err=j.error})}).then(next)
+    }
+    return next().then(function(){
+      if(dead.length)rpc('ai_push_prune',{p_tokens:dead}).catch(function(){});
+      toast(sent?('تم الإرسال ✅ وصل لـ '+sent+' جهاز'):('⚠️ الـ Push ما وصل'+(err?': '+err:'')))
+    })
+  })
+}
 $('ntL').onclick=function(e){var b=e.target.closest('.ntdel');if(!b||!confirm('حذف الإشعار؟ يختفي من عند الكل.'))return;
   rpc('ai_notice_del',{p_id:+b.dataset.i}).then(loadNotify).catch(fail)};
 
