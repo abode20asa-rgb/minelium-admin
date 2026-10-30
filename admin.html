@@ -110,6 +110,7 @@ dialog::backdrop{background:rgba(0,0,0,.6)}
     <!-- المشتركين -->
     <section class="pane hidden" id="p-subs">
       <div class="row" style="margin-bottom:8px;align-items:center"><b style="flex:1" id="scount">المشتركين</b><button class="btn ghost sm" id="sref">تحديث</button><button class="btn bad sm" id="skall">طرد الكل</button></div>
+      <input id="ssearch" placeholder="🔎 ابحث بالاسم أو الإيميل أو الرقم" style="margin-bottom:10px">
       <div id="slist"></div>
     </section>
     <!-- إعدادات الذكاء -->
@@ -226,16 +227,22 @@ $('clist').onclick=function(e){var b=e.target.closest('button');if(!b)return;
 $('cdelall').onclick=function(){if(confirm('حذف كل الأكواد غير المستخدمة؟'))rpc('ai_full_codes_del_all').then(loadCodes).catch(fail)};
 
 /* ── المشتركين ── */
-function loadSubs(){
-  rpc('ai_full_list').then(function(r){
-    var s=r.sessions||[];$('scount').textContent='المشتركين ('+s.length+') • أكواد بالانتظار: '+r.codes;
-    $('slist').innerHTML=s.length?s.map(function(x){
-      return '<div class="card item"><div class="info"><b>'+esc(x.name||'بدون اسم')+'</b> <span class="badge '+esc(x.plan)+'">'+esc(x.plan)+'</span>'+(x.expired?' <span class="no">منتهي</span>':'')
-       +'<div class="mut">'+(x.phone?'📞 '+esc(x.phone)+' • ':'')+planLbl(x.plan,x.value)+'<br>رسائل: '+x.msgs+(x.plan==='plus'?' • اليوم: '+x.used_today+'/'+x.value:'')+(x.expires_at?' • ينتهي: '+fmt(x.expires_at):'')+'<br>آخر نشاط: '+fmt(x.last_seen)+'</div></div>'
-       +'<div class="acts"><button class="btn ghost sm" data-ed="'+x.id+'" data-p="'+esc(x.plan)+'" data-v="'+x.value+'">تعديل</button><button class="btn bad sm" data-k="'+x.id+'">طرد</button></div></div>'
-    }).join(''):'<p class="mut">ماكو مشتركين بعد.</p>'
-  }).catch(fail)
+var subsData=[],subsCodes=0;
+function renderSubs(){
+  var q=($('ssearch').value||'').trim().toLowerCase();
+  var s=subsData.filter(function(x){return !q||[x.name,x.email,x.phone,x.plan].join(' ').toLowerCase().indexOf(q)>=0});
+  $('scount').textContent='المشتركين ('+s.length+(q?' من '+subsData.length:'')+') • أكواد بالانتظار: '+subsCodes;
+  $('slist').innerHTML=s.length?s.map(function(x){
+    return '<div class="card item"><div class="info"><b>'+esc(x.name||'بدون اسم')+'</b> <span class="badge '+esc(x.plan)+'">'+esc(x.plan)+'</span>'+(x.expired?' <span class="no">منتهي</span>':'')
+     +'<div class="mut">'+(x.email?'📧 <span style="direction:ltr;unicode-bidi:embed;user-select:all">'+esc(x.email)+'</span><br>':'')+(x.phone?'📞 '+esc(x.phone)+'<br>':'')+planLbl(x.plan,x.value)
+     +'<br>رسائل: '+x.msgs+(x.plan==='plus'?' • اليوم: '+x.used_today+'/'+x.value:'')+(x.expires_at?' • ينتهي: '+fmt(x.expires_at):'')+'<br>تفعّل: '+fmt(x.created_at)+' • آخر نشاط: '+fmt(x.last_seen)+'</div></div>'
+     +'<div class="acts"><button class="btn ghost sm" data-ed="'+x.id+'" data-p="'+esc(x.plan)+'" data-v="'+x.value+'">تعديل</button><button class="btn bad sm" data-k="'+x.id+'">طرد</button></div></div>'
+  }).join(''):'<p class="mut">'+(subsData.length?'ماكو نتيجة للبحث.':'ماكو مشتركين بعد.')+'</p>'
 }
+function loadSubs(){
+  rpc('ai_full_list').then(function(r){subsData=r.sessions||[];subsCodes=r.codes||0;renderSubs()}).catch(fail)
+}
+$('ssearch').oninput=renderSubs;
 $('sref').onclick=loadSubs;
 $('skall').onclick=function(){if(confirm('طرد كل المشتركين؟ يحتاجون كود جديد.'))rpc('ai_full_kick_all').then(loadSubs).catch(fail)};
 $('slist').onclick=function(e){var b=e.target.closest('button');if(!b)return;
