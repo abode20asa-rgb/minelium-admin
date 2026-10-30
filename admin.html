@@ -287,6 +287,7 @@ function slotHtml(i,a){a=a||{};
  +'<label>الرابط (URL)</label><input class="url" style="direction:ltr" value="'+esc(a.url)+'">'
  +'<div class="row"><div><label>المفتاح (Key)</label><input class="key" type="password" style="direction:ltr" value="'+esc(a.key)+'" autocomplete="off"></div><div><label>الموديل</label><input class="model" style="direction:ltr" value="'+esc(a.model)+'"></div></div>'
  +'<div class="row"><div><label>حد يومي (0 = بلا حد)</label><input class="limit" type="number" min="0" value="'+(Number(a.limit)||0)+'"></div><div><label>ساعة التصفير (UTC)</label><input class="reset" type="number" min="0" max="23" value="'+(parseInt(a.resetUtc,10)||0)+'"></div></div>'
+ +'<label style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" class="eco" style="width:auto"'+(a.eco===true?' checked':'')+'> اقتصادي (جواب مختصر وأرخص)</label>'
  +'<label style="display:flex;gap:8px;align-items:center;color:var(--ink)"><input type="checkbox" class="srch" style="width:auto"'+(a.search===true?' checked':'')+'> بحث إنترنت (Groq مع موديلات gpt-oss فقط)</label>'
  +'<div class="row" style="margin-top:8px"><button class="btn ghost sm tst" type="button">🧪 اختبار</button><button class="btn ghost sm clr" type="button">مسح الخانة</button></div><div class="tres"></div></div>'
 }
@@ -294,7 +295,7 @@ function loadAI(){
   req('/rest/v1/ai_config?id=eq.1&select=data').then(function(rows){
     cfgData=(rows&&rows[0]&&rows[0].data)||{};var apis=Array.isArray(cfgData.apis)?cfgData.apis:[];
     $('aen').checked=cfgData.enabled===true;
-    apis=apis.map(function(a,i){a=a||{};if(i===3&&!a.plans&&(a.url||a.key))a=Object.assign({},a,{plans:['plus','pro','max']});return a});
+    apis=apis.map(function(a,i){a=a||{};if(i===3&&!a.plans&&(a.url||a.key))a=Object.assign({},a,{plans:['plus','pro','max']});if(a.eco===undefined&&i===2&&(a.url||a.key))a=Object.assign({},a,{eco:true});return a});
     var n=Math.max(apis.length,1),h='';for(var i=0;i<n;i++)h+=slotHtml(i,apis[i]);$('slots').innerHTML=h
   }).catch(fail)
 }
@@ -307,7 +308,7 @@ function collect(){return [].map.call(document.querySelectorAll('.slot'),functio
   var url=c.querySelector('.url').value.trim(),key=c.querySelector('.key').value.trim();if(!url&&!key)return {};
   return {url:url,key:key,model:c.querySelector('.model').value.trim(),format:c.querySelector('.fmt').value,
    plans:[].filter.call(c.querySelectorAll('.pl'),function(x){return x.checked}).map(function(x){return x.value}),
-   limit:parseInt(c.querySelector('.limit').value,10)||0,resetUtc:Math.min(23,Math.max(0,parseInt(c.querySelector('.reset').value,10)||0)),search:c.querySelector('.srch').checked}})}
+   limit:parseInt(c.querySelector('.limit').value,10)||0,resetUtc:Math.min(23,Math.max(0,parseInt(c.querySelector('.reset').value,10)||0)),eco:c.querySelector('.eco').checked,search:c.querySelector('.srch').checked}})}
 $('asave').onclick=function(){
   var ap=collect();if(ap.some(function(a){return a.url&&a.plans&&!a.plans.length})){toast('⚠️ اختر باقة وحدة على الأقل لكل API');return}
   var d=Object.assign({},cfgData,{enabled:$('aen').checked,apis:ap});delete d.url;delete d.key;delete d.model;delete d.format;
