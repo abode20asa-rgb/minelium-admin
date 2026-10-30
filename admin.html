@@ -494,6 +494,8 @@ $('ntL').onclick=function(e){var b=e.target.closest('.ntdel');if(!b||!confirm('�
 
 /* ── النماذج: اسم + صورة + الـ APIs اللي تشتغل عليها ── */
 var mdls=[];
+var OFFS=[['voice','🎙️ المكالمة الصوتية'],['imgin','📷 رفع وتحليل الصور'],['search','🔎 بحث الإنترنت'],['imggen','🎨 توليد الصور']];
+function offHtml(m){return '<label style="margin-top:12px">🚫 استثناءات: علّم الميزات اللي تتعطّل بهذا النموذج</label><div style="display:flex;flex-wrap:wrap;gap:6px 14px">'+OFFS.map(function(o){return '<label style="display:flex;gap:6px;align-items:center;color:var(--ink);margin:0"><input type="checkbox" class="moff" value="'+o[0]+'" style="width:auto"'+((m.off||[]).indexOf(o[0])>=0?' checked':'')+'> '+o[1]+'</label>'}).join('')+'</div>'}
 function mApiLabel(a,i){var h='';try{h=new URL(a.url).hostname.replace(/^api\./,'')}catch(e){}return 'API '+(i+1)+' — '+(a.model||h||'')}
 function mRender(){
   var apis=(cfgData.apis||[]).map(function(a,i){return {a:a,i:i}}).filter(function(x){return x.a&&x.a.url});
@@ -504,7 +506,7 @@ function mRender(){
      +'<div class="acts" style="display:flex;gap:6px"><button class="btn ghost sm mup" type="button">▲</button><button class="btn ghost sm mdn" type="button">▼</button><button class="btn bad sm mdel" type="button">🗑</button></div></div>'
      +'<label>وصف قصير (اختياري)</label><input class="md" maxlength="80" placeholder="سريع للأسئلة اليومية" value="'+esc(m.desc)+'">'
      +'<label>الصورة</label><div class="row" style="align-items:center"><input type="file" class="mf" accept="image/*"><button class="btn ghost sm mclr" type="button" style="flex:0 0 auto">إزالة الصورة</button></div>'
-     +'<label style="display:flex;gap:8px;align-items:center;color:var(--ink);margin-top:12px"><input type="checkbox" class="mmain" style="width:auto"'+(m.main?' checked':'')+'> ⭐ النموذج الأساسي: يشتغل على كل الـ APIs ما عدا اللي مخصصة لنماذج ثانية</label>'+(m.main?'<p class="mut">يستعمل تلقائياً كل الـ APIs اللي مو مربوطة بنماذج ثانية، ويكون هو الافتراضي لمن الزبون ما يختار.</p><div style="display:none">':'<label>يشتغل على أي API؟</label><div style="display:flex;flex-wrap:wrap;gap:6px 14px">')
+     +'<label style="display:flex;gap:8px;align-items:center;color:var(--ink);margin-top:12px"><input type="checkbox" class="mmain" style="width:auto"'+(m.main?' checked':'')+'> ⭐ النموذج الأساسي: يشتغل على كل الـ APIs ما عدا اللي مخصصة لنماذج ثانية</label>'+offHtml(m)+(m.main?'<p class="mut">يستعمل تلقائياً كل الـ APIs اللي مو مربوطة بنماذج ثانية، ويكون هو الافتراضي لمن الزبون ما يختار.</p><div style="display:none">':'<label>يشتغل على أي API؟</label><div style="display:flex;flex-wrap:wrap;gap:6px 14px">')
      +(apis.length?apis.map(function(x){return '<label style="display:flex;gap:6px;align-items:center;color:var(--ink);margin:0"><input type="checkbox" class="mapi" value="'+x.i+'" style="width:auto"'+((m.apis||[]).indexOf(x.i)>=0?' checked':'')+'> '+esc(mApiLabel(x.a,x.i))+'</label>'}).join(''):'<span class="no">ماكو APIs محفوظة — احفظ API من تبويب ⚙️ أول</span>')
      +'</div></div>'}).join(''):'<p class="mut">ماكو نماذج بعد. اضغط «إضافة نموذج».</p>'
 }
@@ -513,6 +515,7 @@ $('madd').onclick=function(){mdls.push({id:'m'+Date.now().toString(36),name:'',d
 $('mdls').oninput=function(e){var c=e.target.closest('.mcard');if(!c)return;var m=mdls[+c.dataset.k];if(e.target.classList.contains('mn'))m.name=e.target.value;if(e.target.classList.contains('md'))m.desc=e.target.value};
 $('mdls').onchange=function(e){var t=e.target,c=t.closest('.mcard');if(!c)return;var m=mdls[+c.dataset.k];
   if(t.classList.contains('mmain')){var on=t.checked;mdls.forEach(function(x){x.main=false});m.main=on;if(on)m.apis=[];mRender();return}
+  if(t.classList.contains('moff'))m.off=[].filter.call(c.querySelectorAll('.moff'),function(x){return x.checked}).map(function(x){return x.value});
   if(t.classList.contains('mapi'))m.apis=[].filter.call(c.querySelectorAll('.mapi'),function(x){return x.checked}).map(function(x){return +x.value});
   if(t.classList.contains('mf')&&t.files[0]){var r=new FileReader();r.onload=function(){var im=new Image();im.onload=function(){var cv=document.createElement('canvas');cv.width=cv.height=96;var s=Math.min(im.width,im.height);cv.getContext('2d').drawImage(im,(im.width-s)/2,(im.height-s)/2,s,s,0,0,96,96);var u='';try{u=cv.toDataURL('image/webp',.85)}catch(x){}if(!u||u.indexOf('image/webp')<0)u=cv.toDataURL('image/png');m.icon=u;mRender()};im.onerror=function(){toast('الصورة غير صالحة')};im.src=r.result};r.readAsDataURL(t.files[0])}};
 $('mdls').onclick=function(e){var b=e.target.closest('button');if(!b)return;var c=b.closest('.mcard'),k=+c.dataset.k;
@@ -522,7 +525,7 @@ $('mdls').onclick=function(e){var b=e.target.closest('button');if(!b)return;var 
   if(b.classList.contains('mclr')){mdls[k].icon='';mRender()}};
 $('msave').onclick=function(){
   for(var i=0;i<mdls.length;i++){var m=mdls[i];if(!(m.name||'').trim()){toast('⚠️ اكتب اسم لكل نموذج');return}if(!m.main&&!(m.apis||[]).length){toast('⚠️ اختر API واحد على الأقل للنموذج «'+m.name+'»');return}}
-  var d=Object.assign({},cfgData,{models:mdls.map(function(m){return {id:m.id,name:m.name.trim(),desc:(m.desc||'').trim(),icon:m.icon||'',main:m.main===true,apis:m.main?[]:m.apis}})});
+  var d=Object.assign({},cfgData,{models:mdls.map(function(m){return {id:m.id,name:m.name.trim(),desc:(m.desc||'').trim(),icon:m.icon||'',main:m.main===true,off:Array.isArray(m.off)?m.off:[],apis:m.main?[]:m.apis}})});
   req('/rest/v1/ai_config',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({id:1,data:d,updated_at:new Date().toISOString()})})
    .then(function(){cfgData=d;toast('تم حفظ النماذج ✅')}).catch(fail)};
 
